@@ -97,4 +97,22 @@ uvicorn app.main:app --reload --port 8000 --host 0.0.0.0
 4. Test:
 
 - Health: `GET http://localhost:8000/health`
-- Create user: `POST http://localhost:8000/users` with JSON `{ "email": "a@b.com", "name": "A B" }`
+-- Create user: `POST http://localhost:8000/users` with JSON `{ "email": "a@b.com", "name": "A B" }`
+
+Developer helpers
+- Seed sample dev users:
+
+Run from the `backend` directory:
+
+```bash
+python -m scripts.seed_dev
+```
+
+- Or run directly from repo root (ensure `backend` is on PYTHONPATH):
+
+```bash
+python backend/scripts/seed_dev.py
+```
+
+Frontend (Week 2)
+- A minimal React + Tailwind frontend will live in the `frontend/` folder. It provides a login page and a simple post-login dashboard that shows the current user's info and department-scoped user lists. Follow the top-level `frontend/README.md` for setup when it's added.

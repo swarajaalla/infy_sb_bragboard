@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .database import engine, Base, get_session
 from .crud import get_users, create_user
 from .routers import auth as auth_router
+from .routers import users as users_router
 
 app = FastAPI(title="Bragboard API - Dev")
 
@@ -40,3 +41,4 @@ async def post_user(payload: UserCreate, session: AsyncSession = Depends(get_ses
 
 
 app.include_router(auth_router.router)
+app.include_router(users_router.router)
