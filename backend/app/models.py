@@ -1,0 +1,31 @@
+from sqlalchemy import Column, Integer, String, DateTime, func, Enum
+from .database import Base
+import enum
+
+
+class RoleEnum(str, enum.Enum):
+    employee = "employee"
+    admin = "admin"
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, nullable=True)
+    password_hash = Column(String, nullable=False)
+    department = Column(String, nullable=True)
+    role = Column(Enum(RoleEnum), default=RoleEnum.employee, nullable=False)
+    joined_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    token_hash = Column(String, nullable=False)
+    revoked = Column(Integer, nullable=False, server_default="0")
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

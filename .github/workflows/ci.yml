@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bragboard_dev
+        options: >-
+          --health-cmd="pg_isready -U postgres -d bragboard_dev"
+          --health-interval=5s --health-timeout=5s --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Wait for Postgres
+        run: |
+          echo "Waiting for Postgres to be ready..."
+          python - <<'PY'
+import asyncio,sys
+import asyncpg
+
+async def wait():
+    for _ in range(30):
+        try:
+            conn = await asyncpg.connect('postgresql://postgres:postgres@localhost:5432/bragboard_dev')
+            await conn.close()
+            print('postgres ready')
+            return
+        except Exception as e:
+            print('waiting for postgres...', str(e))
+            await asyncio.sleep(1)
+    sys.exit(1)
+
+asyncio.run(wait())
+PY
+
+      - name: Run DB migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/bragboard_dev
+        run: |
+          alembic -c alembic.ini upgrade head
+
+      - name: Start backend
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/bragboard_dev
+          SECRET_KEY: test-secret
+          ACCESS_TOKEN_EXPIRE_MINUTES: '15'
+          REFRESH_TOKEN_EXPIRE_DAYS: '7'
+        run: |
+          nohup python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &>/tmp/uvicorn.log &
+          # give server time to start
+          sleep 4
+
+      - name: Run tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/bragboard_dev
+        run: |
+          pytest -q tests/test_auth.py

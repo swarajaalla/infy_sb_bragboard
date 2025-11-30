@@ -1,0 +1,6 @@
+cd /workspaces/Infy_SB_Bragboard/backend
+sudo apt update
+sudo apt install -y build-essential python3-dev libssl-dev libpq-dev pkg-config
+python -m pip install --upgrade pip setuptools wheel build
+python -m pip install -r requirements.txt
+
