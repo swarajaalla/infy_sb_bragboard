@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Literal
+from typing import Literal, List
 from datetime import datetime
 
 
@@ -32,3 +32,20 @@ class TokenData(BaseModel):
     sub: int | None = None
     exp: int | None = None
 # (end of schemas)
+
+
+class ShoutOutCreate(BaseModel):
+    message: str
+    recipient_ids: list[int] | None = []
+
+
+class ShoutOutOut(BaseModel):
+    id: int
+    message: str
+    created_at: datetime
+    author: UserOut
+    recipients: List[UserOut]
+
+    class Config:
+        from_attributes = True
+        orm_mode = True 

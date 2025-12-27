@@ -6,7 +6,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/auth': 'http://localhost:8000',
-      '/users': 'http://localhost:8000'
+      '/users': 'http://localhost:8000',
+      '/shoutouts': 'http://localhost:8000'
     }
   }
 })

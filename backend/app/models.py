@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, func, Enum
+from sqlalchemy import Column, Integer, String, DateTime, func, Enum, ForeignKey, Text
 from .database import Base
 import enum
 
@@ -29,3 +29,20 @@ class RefreshToken(Base):
     revoked = Column(Integer, nullable=False, server_default="0")
     expires_at = Column(DateTime(timezone=True), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ShoutOut(Base):
+    __tablename__ = "shoutouts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ShoutOutRecipient(Base):
+    __tablename__ = "shoutout_recipients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    shoutout_id = Column(Integer, ForeignKey("shoutouts.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)

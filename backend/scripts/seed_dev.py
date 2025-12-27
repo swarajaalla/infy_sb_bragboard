@@ -10,15 +10,14 @@ from app import models
 from app.core import security
 
 SAMPLE_USERS = [
-    {"    curl -X POST http://localhost:8000/auth/login \
-      -d "username=joe@example.com" -d "password=secret"
-    # returns {"access_token":"...","refresh_token":"...","token_type":"bearer"}": "alice@example.com", "name": "Alice", "password": "password123", "department": "Engineering"},
+    {"email": "alice@example.com", "name": "Alice", "password": "password123", "department": "Engineering"},
     {"email": "bob@example.com", "name": "Bob", "password": "password123", "department": "Sales"},
     {"email": "carol@example.com", "name": "Carol", "password": "password123", "department": "Engineering"},
-    {"email": "sam@example.com", "name": "Carol", "password": "password123", "department": "Engineering"},
-    {"email": "sai@example.com", "name": "Carol", "password": "password123", "department": "Sales"},
-    {"email": "ani@example.com", "name": "Carol", "password": "password123", "department": "HR"},
+    {"email": "sam@example.com", "name": "Sam", "password": "password123", "department": "Engineering"},
+    {"email": "sai@example.com", "name": "Sai", "password": "password123", "department": "Sales"},
+    {"email": "ani@example.com", "name": "Ani", "password": "password123", "department": "HR"},
     {"email": "dave@example.com", "name": "Dave", "password": "password123", "department": "HR"},
+    {"email": "joe@example.com", "name": "Joe", "password": "password123", "department": "Engineering"},
 ]
 
 
