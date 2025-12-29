@@ -151,3 +151,151 @@ async def get_shoutouts(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Reaction endpoints
+@router.post("/{shoutout_id}/reactions", response_model=schemas.ReactionOut)
+async def add_reaction_to_shoutout(
+    shoutout_id: int,
+    payload: schemas.ReactionCreate,
+    session: AsyncSession = Depends(get_session),
+    current=Depends(get_current_user)
+):
+    """Add or update a reaction to a shoutout"""
+    # Verify shoutout exists
+    result = await session.execute(
+        select(models.ShoutOut).where(models.ShoutOut.id == shoutout_id)
+    )
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Shoutout not found")
+    
+    reaction = await crud.add_reaction(
+        session, 
+        shoutout_id=shoutout_id, 
+        user_id=int(current.id), 
+        reaction_type=payload.reaction_type
+    )
+    return reaction
+
+
+@router.delete("/{shoutout_id}/reactions")
+async def remove_reaction_from_shoutout(
+    shoutout_id: int,
+    session: AsyncSession = Depends(get_session),
+    current=Depends(get_current_user)
+):
+    """Remove user's reaction from a shoutout"""
+    removed = await crud.remove_reaction(session, shoutout_id, int(current.id))
+    if not removed:
+        raise HTTPException(status_code=404, detail="Reaction not found")
+    return {"message": "Reaction removed"}
+
+
+@router.get("/{shoutout_id}/reactions")
+async def get_shoutout_reactions(
+    shoutout_id: int,
+    session: AsyncSession = Depends(get_session),
+    current=Depends(get_current_user)
+):
+    """Get reaction counts and current user's reaction for a shoutout"""
+    counts = await crud.get_reaction_counts(session, shoutout_id)
+    user_reaction = await crud.get_user_reaction(session, shoutout_id, int(current.id))
+    return {
+        "reactions": counts,
+        "user_reaction": user_reaction
+    }
+
+
+# Comment endpoints
+@router.post("/{shoutout_id}/comments", response_model=schemas.CommentOut)
+async def add_comment_to_shoutout(
+    shoutout_id: int,
+    payload: schemas.CommentCreate,
+    session: AsyncSession = Depends(get_session),
+    current=Depends(get_current_user)
+):
+    """Add a comment to a shoutout"""
+    # Verify shoutout exists
+    result = await session.execute(
+        select(models.ShoutOut).where(models.ShoutOut.id == shoutout_id)
+    )
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Shoutout not found")
+    
+    # If parent_id is provided, verify parent comment exists
+    if payload.parent_id:
+        parent_result = await session.execute(
+            select(models.Comment).where(models.Comment.id == payload.parent_id)
+        )
+        if not parent_result.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="Parent comment not found")
+    
+    comment = await crud.add_comment(
+        session,
+        shoutout_id=shoutout_id,
+        user_id=int(current.id),
+        content=payload.content,
+        parent_id=payload.parent_id
+    )
+    
+    # Load author
+    author_result = await session.execute(
+        select(models.User).where(models.User.id == comment.user_id)
+    )
+    author = author_result.scalar_one()
+    
+    return {
+        "id": comment.id,
+        "shoutout_id": comment.shoutout_id,
+        "user_id": comment.user_id,
+        "parent_id": comment.parent_id,
+        "content": comment.content,
+        "created_at": comment.created_at,
+        "updated_at": comment.updated_at,
+        "author": author
+    }
+
+
+@router.get("/{shoutout_id}/comments", response_model=List[schemas.CommentOut])
+async def get_shoutout_comments(
+    shoutout_id: int,
+    session: AsyncSession = Depends(get_session),
+    current=Depends(get_current_user)
+):
+    """Get all comments for a shoutout"""
+    comments = await crud.get_comments(session, shoutout_id)
+    
+    response = []
+    for comment in comments:
+        # Load author for each comment
+        author_result = await session.execute(
+            select(models.User).where(models.User.id == comment.user_id)
+        )
+        author = author_result.scalar_one()
+        
+        response.append({
+            "id": comment.id,
+            "shoutout_id": comment.shoutout_id,
+            "user_id": comment.user_id,
+            "parent_id": comment.parent_id,
+            "content": comment.content,
+            "created_at": comment.created_at,
+            "updated_at": comment.updated_at,
+            "author": author
+        })
+    
+    return response
+
+
+@router.delete("/{shoutout_id}/comments/{comment_id}")
+async def delete_comment_from_shoutout(
+    shoutout_id: int,
+    comment_id: int,
+    session: AsyncSession = Depends(get_session),
+    current=Depends(get_current_user)
+):
+    """Delete a comment (only the author can delete)"""
+    deleted = await crud.delete_comment(session, comment_id, int(current.id))
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Comment not found or unauthorized")
+    return {"message": "Comment deleted"}

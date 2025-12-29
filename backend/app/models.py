@@ -46,3 +46,31 @@ class ShoutOutRecipient(Base):
     id = Column(Integer, primary_key=True, index=True)
     shoutout_id = Column(Integer, ForeignKey("shoutouts.id"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+
+
+class ReactionTypeEnum(str, enum.Enum):
+    like = "like"
+    clap = "clap"
+    star = "star"
+
+
+class Reaction(Base):
+    __tablename__ = "reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    shoutout_id = Column(Integer, ForeignKey("shoutouts.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    reaction_type = Column(Enum(ReactionTypeEnum), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Comment(Base):
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    shoutout_id = Column(Integer, ForeignKey("shoutouts.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    parent_id = Column(Integer, ForeignKey("comments.id"), nullable=True, index=True)  # For nesting
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())

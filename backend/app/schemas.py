@@ -48,4 +48,52 @@ class ShoutOutOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ReactionCreate(BaseModel):
+    reaction_type: Literal["like", "clap", "star"]
+
+
+class ReactionOut(BaseModel):
+    id: int
+    shoutout_id: int
+    user_id: int
+    reaction_type: Literal["like", "clap", "star"]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CommentCreate(BaseModel):
+    content: str
+    parent_id: int | None = None
+
+
+class CommentOut(BaseModel):
+    id: int
+    shoutout_id: int
+    user_id: int
+    parent_id: int | None
+    content: str
+    created_at: datetime
+    updated_at: datetime | None
+    author: UserOut
+
+    class Config:
+        from_attributes = True
+
+
+class ShoutOutWithReactionsAndComments(BaseModel):
+    id: int
+    message: str
+    created_at: datetime
+    author: UserOut
+    recipients: List[UserOut]
+    reactions: dict[str, int]  # {"like": 5, "clap": 3, "star": 2}
+    user_reaction: str | None  # Current user's reaction if any
+    comments: List[CommentOut]
+
+    class Config:
+        from_attributes = True
         orm_mode = True 
