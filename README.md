@@ -30,3 +30,13 @@ BragBoard is an internal employee recognition platform where users can post shou
 cd backend
 pip install -r requirements.txt
 uvicorn main:app --reload
+
+Frontend
+cd frontend
+npm install
+npm run dev
+
+Frontend
+cd frontend
+npm install
+npm run dev
