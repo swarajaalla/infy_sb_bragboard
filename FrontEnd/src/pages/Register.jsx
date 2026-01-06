@@ -13,6 +13,7 @@ function Register() {
     confirmPassword: ""
   });
   const [msg, setMsg] = useState("");
+    const [role, setRole] = useState("");
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
 
@@ -63,12 +64,23 @@ function Register() {
         password: form.password
       });
 
-      const response = await registerUser({
-        name: form.name,
-        email: form.email,
-        department: form.department,
-        password: form.password
-      });
+      const derivedRole =
+  form.department === "HR"
+    ? "HR"
+    : form.department === "Intern"
+    ? "Intern"
+    : form.department === "Trainee"
+    ? "Trainee"
+    : "Employee";
+
+const response = await registerUser({
+  name: form.name,
+  email: form.email,
+  department: form.department,
+  password: form.password,
+  role: derivedRole
+});
+
 
       console.log("Response status:", response.status);
       console.log("Response ok:", response.ok);
@@ -222,24 +234,29 @@ function Register() {
         />
         {errors.email && <p style={{ color: '#ef4444', fontSize: '12px', margin: '4px 0 8px 0' }}>{errors.email}</p>}
 
-        <input
-          type="department"
-          placeholder="Department"
-          value={form.department}
-          style={{
-            border: errors.department ? '2px solid #ef4444' : '1px solid #d1d5db',
-            padding: '8px',
-            width: '100%',
-            marginBottom: '4px',
-            borderRadius: '4px',
-            fontFamily: 'inherit'
-          }}
-          onChange={(e) =>
-            setForm({ ...form, department: e.target.value })
-          }
-        />
+        <select
+  value={form.department}
+  onChange={(e) =>
+    setForm({ ...form, department: e.target.value })
+  }
+  style={{
+    border: errors.department ? '2px solid #ef4444' : '1px solid #d1d5db',
+    padding: '8px',
+    width: '100%',
+    marginBottom: '4px',
+    borderRadius: '4px',
+    fontFamily: 'inherit'
+  }}
+>
+  <option value="">Select Department</option>
+  <option value="HR">HR</option>
+  <option value="Engineering">Engineering</option>
+  <option value="Sales">Sales</option>
+  <option value="Trainee">Trainee</option>
+  <option value="Intern">Intern</option>
+</select>
         {errors.department && <p style={{ color: '#ef4444', fontSize: '12px', margin: '4px 0 8px 0' }}>{errors.department}</p>}
-
+        
 
         <input
           type="password"
@@ -294,7 +311,8 @@ function Register() {
         <p style={{
           marginTop: '12px',
           fontSize: '14px',
-          textAlign: 'center'
+          textAlign: 'center',
+          color: '#6b7280'
         }}>
           Already registered?{" "}
           <span

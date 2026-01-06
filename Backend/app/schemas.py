@@ -1,21 +1,49 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
+
 
 class UserCreate(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     password: str
-    department: str | None = None
+    department: str
+    role: str
+
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class UserResponse(BaseModel):
     id: int
     name: str
     email: str
-    department: str | None
-    role: str
+    department: Optional[str] = None   
+    joined_at: Optional[datetime] = None  
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
+
+class ShoutOutCreate(BaseModel):
+    message: str
+    recipients: list[int]
+
+class ReactionCreate(BaseModel):
+    type: str  # like | clap | star
+
+
+class CommentCreate(BaseModel):
+    content: str
+

@@ -3,6 +3,11 @@ from jose import jwt
 import os
 from datetime import datetime, timedelta, timezone
 import bcrypt
+from fastapi import Depends, HTTPException, Header
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app import models
+
 
 # Initialize passlib context but we'll use bcrypt directly
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -38,3 +43,26 @@ def verify_token(token: str):
         return user_id
     except:
         return None
+
+
+def get_current_user(
+    authorization: str = Header(None),
+    db: Session = Depends(get_db)
+):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    scheme, token = authorization.split()
+    if scheme.lower() != "bearer":
+        raise HTTPException(status_code=401, detail="Invalid auth scheme")
+
+    user_id = verify_token(token)
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    print("Authorization header:", authorization)
+    print("Decoded user_id:", user_id)
+
+    return user
