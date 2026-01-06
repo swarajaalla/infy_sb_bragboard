@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, DateTime, Enum
 from sqlalchemy.sql import func
 from .database import Base
+from sqlalchemy import ForeignKey, Text
+from sqlalchemy.orm import relationship
 import enum
 
 # Enum for user roles
@@ -19,3 +21,87 @@ class User(Base):
     department = Column(String, nullable=True)
     role = Column(Enum(RoleEnum), default=RoleEnum.employee)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class ShoutOut(Base):
+    __tablename__ = "shoutouts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    sender = relationship("User")
+    recipients = relationship(
+        "ShoutOutRecipient",
+        back_populates="shoutout",
+        cascade="all, delete"
+    )
+
+
+class ShoutOutRecipient(Base):
+    __tablename__ = "shoutout_recipients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    shoutout_id = Column(Integer, ForeignKey("shoutouts.id"), nullable=False)
+    recipient_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    shoutout = relationship("ShoutOut", back_populates="recipients")
+    recipient = relationship("User")
+
+
+# Comments
+class Comment(Base):
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    shoutout_id = Column(
+        Integer,
+        ForeignKey("shoutouts.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    user = relationship("User")
+    shoutout = relationship("ShoutOut")
+
+
+# Reactions
+
+class ReactionType(str, enum.Enum):
+    like = "like"
+    clap = "clap"
+    star = "star"
+
+
+class Reaction(Base):
+    __tablename__ = "reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    shoutout_id = Column(
+        Integer,
+        ForeignKey("shoutouts.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    type = Column(Enum(ReactionType), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        # One reaction per user per shout-out
+        {'sqlite_autoincrement': True},
+    )
+
+    # Relationships
+    user = relationship("User")
+    shoutout = relationship("ShoutOut")

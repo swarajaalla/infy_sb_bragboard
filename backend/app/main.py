@@ -4,6 +4,10 @@ from .routers import users
 from .database import engine
 from . import models
 from .config import settings
+from .routers import shoutouts
+from .routers import comments
+from .routers import reactions
+
 
 # Create database tables (development only)
 models.Base.metadata.create_all(bind=engine)
@@ -26,3 +30,9 @@ app.include_router(users.router)
 @app.get("/")
 def root():
     return {"message": "BragBoard Backend Running!"}
+
+app.include_router(shoutouts.router)
+
+app.include_router(comments.router)
+
+app.include_router(reactions.router)

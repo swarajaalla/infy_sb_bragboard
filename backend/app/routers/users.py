@@ -17,6 +17,8 @@ router = APIRouter(
     tags=["users"]
 )
 
+
+
 @router.post("/register", response_model=schemas.UserOut)
 def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     existing = crud.get_user_by_email(db, user_in.email)
@@ -27,11 +29,11 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     new_user = crud.create_user(db, user_in, hashed_password)
     return new_user
 
+
 @router.post("/login", response_model=schemas.Token)
 def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
     user = crud.get_user_by_email(db, login_data.email)
     if not user:
-        # Explicit message requested: prompt to register first
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Email not registered"
@@ -46,19 +48,50 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
     access_token = create_access_token({"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
 
+
+
 @router.get("/me", response_model=schemas.UserOut)
 def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
+
+
+
+@router.get("")
+def get_all_users(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns all users across all departments.
+    Used for cross-department shout-out tagging.
+    """
+    users = crud.get_all_users(db)
+    return [
+        {
+            "id": u.id,
+            "name": u.name,
+            "email": u.email,
+            "department": u.department,
+            "role": u.role,
+            "joined_at": u.joined_at
+        }
+        for u in users
+    ]
+
+
+
 @router.get("/department-peers")
-def get_department_peers(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_department_peers(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
     If current_user.role == 'admin' -> return grouped users by department
     Else -> return list of users in same department (excluding current user)
     """
     if current_user.role == "admin":
         grouped = crud.get_users_grouped_by_department(db)
-        # Convert to serializable dict of lists of UserOut like objects
         result = {}
         for dept, users in grouped.items():
             result[dept] = [{
@@ -72,7 +105,6 @@ def get_department_peers(current_user: models.User = Depends(get_current_user), 
         return {"grouped": result}
     else:
         peers = crud.get_users_by_department(db, current_user.department)
-        # exclude the current user
         peers = [u for u in peers if u.id != current_user.id]
         return {"peers": [{
             "id": u.id,
