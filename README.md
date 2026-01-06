@@ -1,4 +1,4 @@
-# Infy SB BragBoard – Group B
+# Infy SB BragBoard – Group D
 
 ## Project Overview
 BragBoard is an internal employee recognition platform where users can post shout-outs to appreciate colleagues across departments.
@@ -22,6 +22,13 @@ BragBoard is an internal employee recognition platform where users can post shou
 - Shout-out feed
 - Department tagging
 - Frontend-backend integration
+
+### Milestone 3
+- Add reactions (like, clap, star) to post
+- Reaction counters + user-specific tracking
+- Add a commenting system under shout-outs
+- Show avatars, timestamps
+
 
 ## How to Run
 
