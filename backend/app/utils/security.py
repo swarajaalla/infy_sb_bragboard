@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from dotenv import load_dotenv
+from jose import JWTError, jwt # type: ignore
+from passlib.context import CryptContext # type: ignore
+from dotenv import load_dotenv # type: ignore
 import os
 
 load_dotenv()

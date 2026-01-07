@@ -28,6 +28,16 @@ class UserResponse(BaseModel):
     
     class Config:
         from_attributes = True
+    
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            id=obj.id,
+            name=obj.name,
+            email=obj.email,
+            department=obj.department,
+            role=obj.role.value if hasattr(obj.role, 'value') else str(obj.role)
+        )
 
 class Token(BaseModel):
     access_token: str
@@ -113,4 +123,37 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+# @router.get("/debug/users")
+# def debug_users(db: Session = Depends(get_db)):
+#     users = db.query(User).all()
+#     return [
+#         {
+#             "id": u.id,
+#             "email": u.email,
+#             "password": u.password
+#         }
+#         for u in users
+#     ]
+
+
+# @router.post("/login-simple")
+# def login_simple(data: LoginRequest, db: Session = Depends(get_db)):
+#     user = db.query(User).filter(User.email == data.email.strip()).first()
+
+#     if not user:
+#         raise HTTPException(status_code=401, detail="User not found")
+
+#     if not verify_password(data.password.strip(), user.password):
+#         raise HTTPException(status_code=401, detail="Wrong password")
+
+#     access_token = create_access_token(
+#         data={"sub": user.email, "user_id": user.id, "role": user.role.value}
+#     )
+
+#     return {
+#         "access_token": access_token,
+#         "token_type": "bearer",
+#         "user": user
+#     }
 

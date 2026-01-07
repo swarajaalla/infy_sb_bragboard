@@ -1,7 +1,7 @@
 from fastapi import FastAPI # type: ignore
 from fastapi.middleware.cors import CORSMiddleware # type: ignore
 from app.db.database import engine, Base
-from app.api import auth
+from app.api import auth, shoutouts
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -11,7 +11,12 @@ app = FastAPI(title="BragBoard API", version="1.0.0")
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React default port
+    allow_origins=[
+        "http://localhost:3000",  # React default port (if used)
+        "http://localhost:5173",  # Vite default
+        "http://localhost:5174",
+        "http://localhost:5175",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -19,6 +24,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router)
+app.include_router(shoutouts.router)
 
 @app.get("/")
 def root():

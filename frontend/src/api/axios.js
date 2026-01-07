@@ -20,21 +20,36 @@ async function request(method, url, data) {
     body = data ? JSON.stringify(data) : undefined;
   }
 
-  const res = await fetch(BASE + url, {
-    method,
-    headers,
-    body,
-  });
+  try {
+    const res = await fetch(BASE + url, {
+      method,
+      headers,
+      body,
+    });
 
-  const contentType = res.headers.get("content-type") || "";
-  if (contentType.includes("application/json")) {
-    const json = await res.json();
-    if (!res.ok) throw { response: { data: json } };
-    return { data: json };
+    const contentType = res.headers.get("content-type") || "";
+    let responseData = null;
+
+    if (contentType.includes("application/json")) {
+      responseData = await res.json();
+    } else {
+      responseData = await res.text();
+    }
+
+    if (!res.ok) {
+      const error = new Error(`API Error: ${res.status} ${res.statusText}`);
+      error.response = {
+        status: res.status,
+        data: responseData,
+      };
+      throw error;
+    }
+
+    return { data: responseData };
+  } catch (error) {
+    console.error(`Request failed for ${method} ${url}:`, error);
+    throw error;
   }
-
-  if (!res.ok) throw { response: { data: await res.text() } };
-  return { data: null };
 }
 
 const api = {
@@ -43,5 +58,6 @@ const api = {
   put: (url, data) => request("PUT", url, data),
   delete: (url) => request("DELETE", url),
 };
+
 
 export default api;

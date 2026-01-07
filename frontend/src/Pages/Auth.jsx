@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { login } = useContext(AuthContext);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -29,7 +31,20 @@ export default function Auth() {
         params.append("username", form.email);
         params.append("password", form.password);
         const res = await api.post("/auth/login", params);
+        
+        // Store token in localStorage (both keys for compatibility)
+        localStorage.setItem("access_token", res.data.access_token);
         localStorage.setItem("token", res.data.access_token);
+        
+        // Update auth context
+        if (res.data.user && login) {
+          try {
+            await login(form.email, form.password);
+          } catch (contextErr) {
+            console.log("Context login skipped, using direct token storage");
+          }
+        }
+        
         setLoading(false);
         navigate("/dashboard");
       } else {

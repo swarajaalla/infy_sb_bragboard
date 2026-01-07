@@ -9,9 +9,9 @@ class RoleEnum(str, enum.Enum):
     admin = "admin"
 
 class ReactionTypeEnum(str, enum.Enum):
-    like = "like"
+    heart = "heart"
+    thumbs_up = "thumbs_up"
     clap = "clap"
-    star = "star"
 
 class User(Base):
     __tablename__ = "users"
@@ -77,7 +77,7 @@ class Reaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     shoutout_id = Column(Integer, ForeignKey("shoutouts.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    type = Column(Enum(ReactionTypeEnum), nullable=False)
+    type = Column(String, nullable=False)  # Changed from Enum to String
     
     # Relationships
     shoutout = relationship("ShoutOut", back_populates="reactions")

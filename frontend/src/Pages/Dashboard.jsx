@@ -1,23 +1,47 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import api from "../api/axios";
+import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
+import CreateShoutOut from "../components/CreateShoutOut";
+import ShoutOutFeed from "../components/ShoutOutFeed";
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user: contextUser } = useContext(AuthContext);
+  const [user, setUser] = useState(contextUser || null);
+  const [loading, setLoading] = useState(!contextUser);
+  const [activeTab, setActiveTab] = useState("feed");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
+    // If we have context user, use it
+    if (contextUser) {
+      setUser(contextUser);
+      setLoading(false);
+      return;
+    }
+
+    const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+    
+    if (!token) {
+      // No token, redirect to login
+      window.location.href = "/login";
+      return;
+    }
+
     api
       .get("/auth/me")
       .then((res) => {
+        console.log("User data:", res.data);
         setUser(res.data);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Error fetching user:", err);
+        localStorage.removeItem("access_token");
         localStorage.removeItem("token");
-        window.location.href = "/";
+        window.location.href = "/login";
       });
-  }, []);
+  }, [contextUser]);
 
   if (loading) {
     return (
@@ -56,38 +80,46 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Info Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1 */}
-          <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition transform hover:scale-105">
-            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-              <span className="text-2xl">🏆</span>
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Your Achievements</h3>
-            <p className="text-gray-600">Share and track your professional wins</p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition transform hover:scale-105">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-              <span className="text-2xl">👥</span>
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Team Collaboration</h3>
-            <p className="text-gray-600">Celebrate your team's accomplishments</p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition transform hover:scale-105">
-            <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mb-4">
-              <span className="text-2xl">📊</span>
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Analytics</h3>
-            <p className="text-gray-600">Track your growth and impact</p>
-          </div>
+        {/* Tab Navigation */}
+        <div className="flex gap-4 mb-8">
+          <button
+            onClick={() => setActiveTab("feed")}
+            className={`px-6 py-3 font-semibold rounded-lg transition ${
+              activeTab === "feed"
+                ? "bg-blue-600 text-white shadow-lg"
+                : "bg-white text-gray-800 shadow-md hover:shadow-lg"
+            }`}
+          >
+            📢 View Feed
+          </button>
+          <button
+            onClick={() => setActiveTab("post")}
+            className={`px-6 py-3 font-semibold rounded-lg transition ${
+              activeTab === "post"
+                ? "bg-blue-600 text-white shadow-lg"
+                : "bg-white text-gray-800 shadow-md hover:shadow-lg"
+            }`}
+          >
+            ✍️ Post Shout-Out
+          </button>
         </div>
 
+        {/* Tab Content */}
+        {activeTab === "feed" ? (
+          <ShoutOutFeed refreshTrigger={refreshTrigger} />
+        ) : (
+          <>
+            <CreateShoutOut
+              onSuccess={() => {
+                setActiveTab("feed");
+                setRefreshTrigger(refreshTrigger + 1);
+              }}
+            />
+          </>
+        )}
+
         {/* User Details */}
-        <div className="mt-8 bg-white rounded-2xl shadow-md p-6">
+        <div className="mt-12 bg-white rounded-2xl shadow-md p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Profile Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
