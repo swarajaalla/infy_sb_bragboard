@@ -1,0 +1,7 @@
+import os
+
+DATABASE_URL = "postgresql://postgres:Op12345@localhost/bragboard"
+
+SECRET_KEY = "SUPER_SECRET_KEY_CHANGE_THIS"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
