@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getReactions, reactToShoutout } from "../../api/reactions";
+import axiosClient from "../../api/axiosClient";
 
 export default function ReactionBar({
   shoutoutId,
@@ -7,7 +8,8 @@ export default function ReactionBar({
   showWhenEmpty, // 👈 NEW
 }) {
   const [counts, setCounts] = useState(null);
-  const [userReaction, setUserReaction] = useState(null);
+const [userReaction, setUserReaction] = useState(null);
+
 
   useEffect(() => {
     const load = async () => {
@@ -31,12 +33,28 @@ export default function ReactionBar({
   }
 
   const handleReact = async (type) => {
-    if (!allowReact) return;
-    await reactToShoutout(shoutoutId, type);
+  if (!allowReact) return;
+
+  try {
+    // 🔁 Toggle behavior
+    if (userReaction === type) {
+      // Delete my reaction
+      await axiosClient.delete(
+        `/api/reactions/by-shoutout/${shoutoutId}`
+      );
+    } else {
+      // Add / update reaction
+      await reactToShoutout(shoutoutId, type);
+    }
+
     const res = await getReactions(shoutoutId);
     setCounts(res.data.counts);
     setUserReaction(res.data.current_user_reaction);
-  };
+  } catch (e) {
+    alert("Failed to update reaction");
+  }
+};
+
 
   const btn = (type) =>
     `px-3 py-1 rounded-full text-sm border transition

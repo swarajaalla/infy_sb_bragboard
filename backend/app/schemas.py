@@ -80,3 +80,18 @@ class ReactionResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class ReportCreate(BaseModel):
+    shoutout_id: int
+    reason: str
+
+
+class ReportOut(BaseModel):
+    id: int
+    shoutout_id: int
+    reason: str
+    resolved: bool
+    created_at: datetime
+    reported_by: dict
+
+    model_config = {"from_attributes": True}

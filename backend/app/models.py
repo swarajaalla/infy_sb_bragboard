@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Enum, Boolean
 from sqlalchemy.sql import func
 from .database import Base
 from sqlalchemy import ForeignKey, Text
@@ -105,3 +105,25 @@ class Reaction(Base):
     # Relationships
     user = relationship("User")
     shoutout = relationship("ShoutOut")
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    shoutout_id = Column(
+        Integer,
+        ForeignKey("shoutouts.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    reported_by = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    reason = Column(Text, nullable=False)
+    resolved = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    shoutout = relationship("ShoutOut")
+    reporter = relationship("User")

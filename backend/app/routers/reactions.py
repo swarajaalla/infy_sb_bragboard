@@ -106,3 +106,29 @@ def delete_reaction(
 
     crud.delete_reaction(db, reaction)
     return None
+
+# ---------------------------------
+# DELETE /reactions/by-shoutout/{shoutout_id}
+# Delete current user's reaction on a shoutout
+# ---------------------------------
+@router.delete("/by-shoutout/{shoutout_id}", status_code=204)
+def delete_my_reaction(
+    shoutout_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    reaction = (
+        db.query(models.Reaction)
+        .filter(
+            models.Reaction.shoutout_id == shoutout_id,
+            models.Reaction.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not reaction:
+        raise HTTPException(status_code=404, detail="Reaction not found")
+
+    db.delete(reaction)
+    db.commit()
+    return None

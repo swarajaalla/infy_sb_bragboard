@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { getComments, createComment } from "../../api/comments";
+import { formatDateTime } from "../../utils/date";
+import axiosClient from "../../api/axiosClient";
+
 
 export default function CommentSection({
   shoutoutId,
@@ -33,17 +36,50 @@ export default function CommentSection({
     return recipients.some((r) => r.id === currentUser.id);
   });
 
+  const handleDeleteComment = async (commentId) => {
+  if (!confirm("Delete this comment?")) return;
+
+  try {
+    await axiosClient.delete(`/api/comments/${commentId}`);
+    const res = await getComments(shoutoutId);
+    setComments(res.data);
+  } catch (e) {
+    alert("Failed to delete comment");
+  }
+};
+
+
   return (
     <div className="pt-3 space-y-3">
       {visibleComments.map((c) => (
-        <div key={c.id} className="text-sm bg-white rounded-lg p-2 border">
-          <span className="font-semibold">{c.user.name}</span>
-          <span className="text-xs text-gray-500 ml-2">
-            ({c.user.department})
-          </span>
-          <p className="mt-1">{c.content}</p>
-        </div>
-      ))}
+  <div key={c.id} className="text-sm bg-white rounded-lg p-2 border">
+    <div className="flex justify-between items-center">
+      <div>
+        <span className="font-semibold">{c.user.name}</span>
+        <span className="text-xs text-gray-500 ml-2">
+          ({c.user.department})
+        </span>
+      </div>
+
+      {(currentUser.role === "admin" ||
+        c.user.id === currentUser.id) && (
+        <button
+          onClick={() => handleDeleteComment(c.id)}
+          className="text-xs text-red-600 hover:underline"
+        >
+          🗑️ Delete
+        </button>
+      )}
+    </div>
+
+    <p className="mt-1">{c.content}</p>
+
+    <p className="text-xs text-gray-400">
+      {formatDateTime(c.created_at)}
+    </p>
+  </div>
+))}
+
 
       {allowComment && currentUser.role !== "admin" && (
         <div className="flex gap-2">

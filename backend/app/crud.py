@@ -200,3 +200,38 @@ def delete_reaction(
 ):
     db.delete(reaction)
     db.commit()
+
+# =======================
+# Reports CRUD (Week 7)
+# =======================
+
+def create_report(
+    db: Session,
+    shoutout_id: int,
+    reported_by: int,
+    reason: str
+):
+    report = models.Report(
+        shoutout_id=shoutout_id,
+        reported_by=reported_by,
+        reason=reason
+    )
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+    return report
+
+
+def get_reports(db: Session):
+    return (
+        db.query(models.Report)
+        .order_by(models.Report.created_at.desc())
+        .all()
+    )
+
+
+def resolve_report(db: Session, report: models.Report):
+    report.resolved = True
+    db.commit()
+    db.refresh(report)
+    return report

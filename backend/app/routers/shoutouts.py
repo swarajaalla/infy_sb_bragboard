@@ -98,3 +98,44 @@ def get_shoutouts(
         })
 
     return response
+
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from ..database import get_db
+from ..auth import get_current_user
+from .. import models
+
+@router.delete("/{shoutout_id}", status_code=204)
+def delete_shoutout(
+    shoutout_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    shoutout = (
+        db.query(models.ShoutOut)
+        .filter(models.ShoutOut.id == shoutout_id)
+        .first()
+    )
+
+    if not shoutout:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Shout-out not found"
+        )
+
+    # 🔐 Authorization rules
+    is_admin = current_user.role == "admin"
+    is_owner = shoutout.sender_id == current_user.id
+
+    if not is_admin and not is_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this shout-out"
+        )
+
+    db.delete(shoutout)
+    db.commit()
+
+    return None

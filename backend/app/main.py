@@ -7,6 +7,8 @@ from .config import settings
 from .routers import shoutouts
 from .routers import comments
 from .routers import reactions
+from .routers import admin
+from .routers import reports
 
 
 # Create database tables (development only)
@@ -36,3 +38,7 @@ app.include_router(shoutouts.router)
 app.include_router(comments.router)
 
 app.include_router(reactions.router)
+
+app.include_router(admin.router)
+
+app.include_router(reports.router)
