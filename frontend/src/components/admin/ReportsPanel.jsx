@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { getReports, resolveReport } from "../../api/reports";
 import axiosClient from "../../api/axiosClient";
 import { formatDateTime } from "../../utils/date";
-
+import { exportReportsToCSV } from "../../utils/exportCSV";
+import { exportReportsToPDF } from "../../utils/exportPDF";
 
 export default function ReportsPanel() {
   const [reports, setReports] = useState([]);
@@ -10,22 +11,22 @@ export default function ReportsPanel() {
   const [loading, setLoading] = useState(true);
 
   const loadReports = async () => {
-  setLoading(true);
-  try {
-    const [reportsRes, shoutoutsRes] = await Promise.all([
-      getReports(),
-      axiosClient.get("/api/shoutouts"),
-    ]);
+    setLoading(true);
+    try {
+      const [reportsRes, shoutoutsRes] = await Promise.all([
+        getReports(),
+        axiosClient.get("/api/shoutouts"),
+      ]);
 
-    setReports(reportsRes.data.filter((r) => !r.resolved));
-    setShoutouts(shoutoutsRes.data);
-  } catch (e) {
-    console.error(e);
-  } finally {
-    setLoading(false);
-  }
-};
-
+      // Only unresolved reports
+      setReports(reportsRes.data.filter((r) => !r.resolved));
+      setShoutouts(shoutoutsRes.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadReports();
@@ -48,70 +49,94 @@ export default function ReportsPanel() {
 
   return (
     <div className="bg-white rounded-xl shadow border p-4 space-y-4">
-      <h2 className="text-lg font-semibold">🚩 Reported Shout-outs</h2>
+      {/* Title */}
+      <h2 className="text-lg font-semibold">
+        🚩 Reported Shout-outs
+      </h2>
 
+      {/* 📤 EXPORT BUTTONS — CORRECT PLACE */}
+      {reports.length > 0 && (
+        <div className="flex gap-3">
+          <button
+  onClick={() => exportReportsToCSV(reports, shoutouts)}
+  className="px-3 py-1 text-sm bg-gray-600 text-white rounded"
+>
+  Export CSV
+</button>
+
+<button
+  onClick={() => exportReportsToPDF(reports, shoutouts)}
+  className="px-3 py-1 text-sm bg-gray-600 text-white rounded"
+>
+  Export PDF
+</button>
+
+        </div>
+      )}
+
+      {/* Empty state */}
       {reports.length === 0 && (
         <p className="text-sm text-gray-400">
           No reported shout-outs
         </p>
       )}
 
+      {/* Reports list */}
       {reports.map((r) => {
-  const shoutout = shoutouts.find(
-    (s) => s.id === r.shoutout_id
-  );
+        const shoutout = shoutouts.find(
+          (s) => s.id === r.shoutout_id
+        );
 
-  return (
-    <div
-      key={r.id}
-      className="border rounded-lg p-4 space-y-3 bg-red-50"
-    >
-      {/* Shoutout content */}
-      {shoutout ? (
-        <div className="bg-white border rounded p-3">
-          <p className="text-sm text-gray-800">
-            {shoutout.message}
-          </p>
+        return (
+          <div
+            key={r.id}
+            className="border rounded-lg p-4 space-y-3 bg-red-50"
+          >
+            {/* Shoutout content */}
+            {shoutout ? (
+              <div className="bg-white border rounded p-3">
+                <p className="text-sm text-gray-800">
+                  {shoutout.message}
+                </p>
 
-          <p className="text-xs text-gray-500 mt-1">
-            From {shoutout.sender?.name} •{" "}
-            {formatDateTime(shoutout.created_at)}
-          </p>
-        </div>
-      ) : (
-        <p className="text-sm text-gray-400">
-          Shoutout not found (may be deleted)
-        </p>
-      )}
+                <p className="text-xs text-gray-500 mt-1">
+                  From {shoutout.sender?.name} •{" "}
+                  {formatDateTime(shoutout.created_at)}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">
+                Shoutout not found (may be deleted)
+              </p>
+            )}
 
-      <p className="text-sm">
-        <span className="font-semibold">Reason:</span>{" "}
-        {r.reason}
-      </p>
+            <p className="text-sm">
+              <span className="font-semibold">Reason:</span>{" "}
+              {r.reason}
+            </p>
 
-      <p className="text-xs text-gray-600">
-        Reported by {r.reported_by.name}
-      </p>
+            <p className="text-xs text-gray-600">
+              Reported by {r.reported_by.name}
+            </p>
 
-      <div className="flex gap-3 pt-2">
-        <button
-          onClick={() => handleResolve(r.id)}
-          className="px-3 py-1 text-sm bg-green-600 text-white rounded"
-        >
-          Resolve
-        </button>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => handleResolve(r.id)}
+                className="px-3 py-1 text-sm bg-green-600 text-white rounded"
+              >
+                Resolve
+              </button>
 
-        <button
-          onClick={() => handleDelete(r.shoutout_id)}
-          className="px-3 py-1 text-sm bg-red-600 text-white rounded"
-        >
-          Delete Shout-out
-        </button>
-      </div>
-    </div>
-  );
-})}
-
+              <button
+                onClick={() => handleDelete(r.shoutout_id)}
+                className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+              >
+                Delete Shout-out
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

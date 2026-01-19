@@ -5,6 +5,9 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import LeaderboardPage from "./pages/Leaderboard";
+import AdminEmployeesPage from "./pages/AdminEmployeesPage";
+
 
 export default function App() {
   return (
@@ -33,9 +36,21 @@ export default function App() {
           }
         />
 
+
+
         {/* Fallback */}
         <Route path="*" element={<Login />} />
+
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+
+        <Route
+  path="/admin/employees"
+  element={<AdminEmployeesPage />}
+/>
+
       </Routes>
     </BrowserRouter>
+       
+        
   );
 }

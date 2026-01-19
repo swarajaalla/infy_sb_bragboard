@@ -47,8 +47,35 @@ export default function AdminDashboard() {
       <Navbar />
 
       <div className="flex h-[calc(100vh-64px)]">
-        {/* LEFT — Departments */}
-        <aside className="w-72 bg-white border-r overflow-y-auto">
+        {/* LEFT — Admin Navigation + Departments */}
+        <aside className="w-72 bg-white border-r overflow-y-auto p-4 space-y-4">
+          {/* 🏆 Leaderboard */}
+          <div className="bg-indigo-50 rounded-lg p-3">
+            <a
+              href="/leaderboard"
+              className="text-indigo-700 font-semibold text-sm hover:underline"
+            >
+              🏆 Company Leaderboard
+            </a>
+            <p className="text-xs text-gray-500 mt-1">
+              View appreciation rankings
+            </p>
+          </div>
+
+          {/* 👥 Employees */}
+          <div className="bg-indigo-50 rounded-lg p-3">
+            <a
+              href="/admin/employees"
+              className="text-indigo-700 font-semibold text-sm hover:underline"
+            >
+              👥 Employees
+            </a>
+            <p className="text-xs text-gray-500 mt-1">
+              View & manage all employees
+            </p>
+          </div>
+
+          {/* 📂 Departments */}
           <DepartmentTree
             groupedUsers={groupedUsers}
             selectedEmployee={selectedEmployee}
@@ -58,10 +85,8 @@ export default function AdminDashboard() {
 
         {/* CENTER — Admin Workspace */}
         <main className="flex-1 p-8 space-y-8 overflow-y-auto">
-          {/* 🚩 Reports Panel */}
           <ReportsPanel />
 
-          {/* Shoutout Composer */}
           <ShoutoutComposer
             allUsers={allUsers}
             onPosted={async () => {
@@ -70,7 +95,6 @@ export default function AdminDashboard() {
             }}
           />
 
-          {/* Shoutout Feed */}
           <ShoutoutFeed
             shoutouts={shoutouts}
             currentUser={user}
