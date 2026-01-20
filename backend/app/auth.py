@@ -62,9 +62,6 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
-    """
-    Validates token and returns the current logged-in user.
-    """
     token = credentials.credentials
 
     credentials_exception = HTTPException(
@@ -87,10 +84,17 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    # Fetch user from DB
     user = db.query(models.User).filter(models.User.id == user_id).first()
 
     if not user:
         raise credentials_exception
 
+    # ✅ SOFT DELETE CHECK
+    if not user.is_active:
+        raise HTTPException(
+            status_code=403,
+            detail="Your account has been deactivated. Contact admin."
+        )
+
     return user
+

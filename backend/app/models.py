@@ -21,6 +21,7 @@ class User(Base):
     department = Column(String, nullable=True)
     role = Column(Enum(RoleEnum), default=RoleEnum.employee)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
+    is_active = Column(Boolean, default=True)
 
 class ShoutOut(Base):
     __tablename__ = "shoutouts"

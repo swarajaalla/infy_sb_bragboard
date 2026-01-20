@@ -131,7 +131,12 @@ def get_all_employees_stats(
             detail="Admin access required"
         )
 
-    users = db.query(models.User).all()
+    users = (
+        db.query(models.User)
+        .filter(models.User.is_active == True)
+        .all()
+    )
+
 
     result = []
 
@@ -169,6 +174,7 @@ def get_all_employees_stats(
             "id": u.id,
             "name": u.name,
             "email": u.email,
+            "department": u.department,   # ✅ ADD THIS
             "joined_at": u.joined_at,
             "contributions": contributions,
             "reports_made": reports_made,
@@ -176,5 +182,35 @@ def get_all_employees_stats(
             "most_appreciated": most_appreciated
         })
 
+
     return result
 
+@router.delete("/employees/{employee_id}", status_code=204)
+def delete_employee(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    # 🔒 Admin-only
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+
+    user = db.query(models.User).filter(models.User.id == employee_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    # ❌ Prevent admin from deleting themselves
+    if user.id == current_user.id:
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot delete yourself"
+        )
+
+    user.is_active = False
+    db.commit()
+
+    return
