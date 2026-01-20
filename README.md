@@ -3,7 +3,7 @@
 ## 📌 Project Overview
 BragBoard is a web-based employee recognition platform designed to encourage peer appreciation and improve workplace engagement. Employees can send shoutouts to colleagues, react and comment on posts, while administrators can monitor activity, moderate content, and generate reports.
 
-This project is developed as part of the **Infosys Internship / System Builder Program**.
+This project is developed as part of the **Infosys SpringBoard Virtual Internship**.
 
 ---
 
