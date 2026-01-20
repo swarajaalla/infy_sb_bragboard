@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status # type: ignore
+from fastapi import APIRouter, Depends, HTTPException, status, Query # type: ignore
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm # type: ignore
 from sqlalchemy.orm import Session # type: ignore
+from sqlalchemy import desc # type: ignore
 from pydantic import BaseModel, EmailStr # type: ignore
 from app.db.database import get_db
-from app.db.models import User, RoleEnum
+from app.db.models import User, RoleEnum, Notification
 from app.utils.security import verify_password, get_password_hash, create_access_token
-from datetime import timedelta
+from datetime import datetime, timedelta
+from typing import List
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -44,6 +46,21 @@ class Token(BaseModel):
     token_type: str
     user: UserResponse
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class NotificationResponse(BaseModel):
+    id: int
+    message: str
+    type: str
+    related_id: int
+    is_read: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
 # Register endpoint
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserRegister, db: Session = Depends(get_db)):
@@ -71,29 +88,87 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
     
     return new_user
 
-# Login endpoint
+# JSON Login endpoint (accepts JSON body)
 @router.post("/login", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # Find user
-    user = db.query(User).filter(User.email == form_data.username).first()
+def login(credentials: LoginRequest, db: Session = Depends(get_db)):
+    """Login with email and password (JSON body)"""
+    print(f"Login attempt - email: {credentials.email}")
     
-    if not user or not verify_password(form_data.password, user.password):
+    # Find user by email
+    user = db.query(User).filter(User.email == credentials.email).first()
+    print(f"User found: {user is not None}")
+    
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="User not found",
+        )
+    
+    if not verify_password(credentials.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password",
+        )
+    
+    # Create access token with user info
+    role_value = user.role.value if hasattr(user.role, 'value') else str(user.role)
+    access_token = create_access_token(
+        data={"sub": user.email, "user_id": user.id, "role": role_value}
+    )
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse(
+            id=user.id,
+            name=user.name,
+            email=user.email,
+            department=user.department,
+            role=role_value
+        )
+    )
+
+# Form-based login endpoint (backup)
+@router.post("/login-form")
+def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """Login with form-encoded data (backup)"""
+    print(f"Form login attempt - username: {form_data.username}")
+    
+    # Find user by email (form_data.username is email field from OAuth2)
+    user = db.query(User).filter(User.email == form_data.username).first()
+    print(f"User found: {user is not None}")
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Create access token
+    if not verify_password(form_data.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Create access token with user info
+    role_value = user.role.value if hasattr(user.role, 'value') else str(user.role)
     access_token = create_access_token(
-        data={"sub": user.email, "user_id": user.id, "role": user.role.value}
+        data={"sub": user.email, "user_id": user.id, "role": role_value}
     )
     
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": user
-    }
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse(
+            id=user.id,
+            name=user.name,
+            email=user.email,
+            department=user.department,
+            role=role_value
+        )
+    )
 
 # Get current user
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
@@ -123,6 +198,64 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+# Get user notifications
+@router.get("/notifications", response_model=List[NotificationResponse])
+def get_notifications(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all notifications for the current user"""
+    
+    notifications = db.query(Notification).filter(
+        Notification.user_id == current_user.id
+    ).order_by(
+        desc(Notification.created_at)
+    ).offset(offset).limit(limit).all()
+    
+    return notifications
+
+# Get unread notifications count
+@router.get("/notifications/unread/count")
+def get_unread_count(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get count of unread notifications"""
+    
+    unread_count = db.query(Notification).filter(
+        Notification.user_id == current_user.id,
+        Notification.is_read == 0
+    ).count()
+    
+    return {"unread_count": unread_count}
+
+# Mark notification as read
+@router.post("/notifications/{notification_id}/read")
+def mark_notification_as_read(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Mark a notification as read"""
+    
+    notification = db.query(Notification).filter(
+        Notification.id == notification_id,
+        Notification.user_id == current_user.id
+    ).first()
+    
+    if not notification:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found"
+        )
+    
+    notification.is_read = 1
+    db.commit()
+    
+    return {"message": "Notification marked as read"}
 
 # @router.get("/debug/users")
 # def debug_users(db: Session = Depends(get_db)):

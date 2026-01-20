@@ -11,6 +11,15 @@ export default function CreateShoutOut({ onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [attachmentPreviews, setAttachmentPreviews] = useState([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const emojis = [
+    "😀", "😂", "❤️", "👍", "🔥", "👏", "😍", "🎉", "✨", "🙌",
+    "😎", "💪", "👌", "🚀", "💯", "🎊", "👏", "💝", "🌟", "⭐",
+    "😡", "😢", "😴", "😷", "🤔", "😎", "🤖", "👽", "🎭", "🎨"
+  ];
 
   const searchUsers = async (query) => {
     if (!query.trim()) {
@@ -21,38 +30,160 @@ export default function CreateShoutOut({ onSuccess }) {
 
     try {
       const response = await api.get(`/shoutouts/users/search?query=${encodeURIComponent(query)}`);
+      console.log("Search results:", response.data); // Debug log
       setSearchResults(response.data);
       setShowSearchResults(true);
     } catch (err) {
       console.error("Error searching users:", err);
+      setError("Failed to search users");
     }
   };
 
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    searchUsers(query);
+    
+    // Strip @ symbol if present for searching
+    const searchQuery = query.startsWith("@") ? query.substring(1) : query;
+    searchUsers(searchQuery);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Enter" && searchResults.length > 0) {
+      e.preventDefault();
+      // Add the first search result
+      addRecipient(searchResults[0]);
+    }
   };
 
   const addRecipient = (user) => {
+    // Ensure user has an id
+    if (!user || !user.id) {
+      console.error("Invalid user object:", user);
+      setError("Invalid user selected");
+      return;
+    }
+    
     if (!recipients.find((r) => r.id === user.id)) {
       setRecipients([...recipients, user]);
+      setSearchQuery("");
+      setSearchResults([]);
+      setShowSearchResults(false);
+    } else {
+      setError("User already tagged");
+      setTimeout(() => setError(""), 2000);
     }
-    setSearchQuery("");
-    setSearchResults([]);
-    setShowSearchResults(false);
   };
 
   const removeRecipient = (userId) => {
     setRecipients(recipients.filter((r) => r.id !== userId));
   };
 
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files);
+    
+    for (const file of files) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("File size must be less than 5MB");
+        continue;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64Data = event.target.result;
+        const fileType = file.type.startsWith("image/") ? "image" : "file";
+        
+        setAttachments([
+          ...attachments,
+          {
+            file_name: file.name,
+            file_type: fileType,
+            file_data: base64Data,
+            file_size: file.size
+          }
+        ]);
+
+        setAttachmentPreviews([
+          ...attachmentPreviews,
+          {
+            name: file.name,
+            type: fileType,
+            preview: fileType === "image" ? base64Data : null
+          }
+        ]);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+    setAttachmentPreviews(attachmentPreviews.filter((_, i) => i !== index));
+  };
+
+  const handleMessageChange = (e) => {
+    const text = e.target.value;
+    setMessage(text);
+    
+    // Auto-detect @ mentions in the message
+    const mentionPattern = /@(\w+)/g;
+    const matches = text.match(mentionPattern);
+    
+    if (matches) {
+      // Extract usernames from mentions
+      const usernames = matches.map(m => m.substring(1)); // Remove @
+      searchAndTagMentions(usernames);
+    }
+  };
+
+  const searchAndTagMentions = async (usernames) => {
+    try {
+      for (const username of usernames) {
+        // Check if already tagged
+        const alreadyTagged = recipients.some(r => r.name.toLowerCase() === username.toLowerCase());
+        if (alreadyTagged) continue;
+        
+        // Search for the user
+        const response = await api.get(`/shoutouts/users/search?query=${encodeURIComponent(username)}`);
+        if (response.data && response.data.length > 0) {
+          const user = response.data[0];
+          // Auto-tag the matching user only if we have a valid user object with id
+          if (user && user.id && !recipients.find(r => r.id === user.id)) {
+            setRecipients(prev => [...prev, user]);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error searching mentions:", err);
+    }
+  };
+
+  const addEmoji = (emoji) => {
+    const attachment = {
+      file_name: emoji,
+      file_type: "emoji",
+      file_data: emoji,
+      file_size: emoji.length
+    };
+    setAttachments([...attachments, attachment]);
+    setAttachmentPreviews([
+      ...attachmentPreviews,
+      {
+        name: emoji,
+        type: "emoji",
+        preview: emoji
+      }
+    ]);
+    setShowEmojiPicker(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!message.trim()) {
-      setError("Message cannot be empty");
+    if (!message.trim() && attachments.length === 0) {
+      setError("Message or attachment is required");
       return;
     }
 
@@ -67,10 +198,13 @@ export default function CreateShoutOut({ onSuccess }) {
       await api.post("/shoutouts/", {
         message: message.trim(),
         recipient_ids: recipients.map((r) => r.id),
+        attachments: attachments
       });
 
       setMessage("");
       setRecipients([]);
+      setAttachments([]);
+      setAttachmentPreviews([]);
       setError("");
       
       if (onSuccess) {
@@ -95,12 +229,106 @@ export default function CreateShoutOut({ onSuccess }) {
           </label>
           <textarea
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Write your shout-out message here..."
+            onChange={handleMessageChange}
+            placeholder="Write your shout-out message here... (Use @username to mention people)"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             rows="5"
           />
         </div>
+
+        {/* Attachment Preview */}
+        {attachmentPreviews.length > 0 && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Attachments ({attachmentPreviews.length})
+            </label>
+            <div className="flex flex-wrap gap-3">
+              {attachmentPreviews.map((preview, index) => (
+                <div key={index} className="relative">
+                  {preview.type === "image" && preview.preview && (
+                    <img 
+                      src={preview.preview} 
+                      alt={preview.name}
+                      className="h-24 w-24 object-cover rounded-lg border border-gray-300"
+                    />
+                  )}
+                  {preview.type === "emoji" && (
+                    <div className="h-24 w-24 flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300 text-4xl">
+                      {preview.preview}
+                    </div>
+                  )}
+                  {preview.type === "file" && (
+                    <div className="h-24 w-24 flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300 flex-col">
+                      <span className="text-2xl">📄</span>
+                      <span className="text-xs text-gray-600 text-center px-1 truncate">{preview.name}</span>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Attachment Controls */}
+        <div className="mb-4 flex gap-2">
+          <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer transition">
+            <span className="text-lg">🖼️</span>
+            <span className="text-sm font-medium">Add Image</span>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
+          
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition flex items-center gap-2"
+          >
+            <span className="text-lg">😊</span>
+            <span className="text-sm font-medium">Add Emoji</span>
+          </button>
+          
+          <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer transition">
+            <span className="text-lg">📎</span>
+            <span className="text-sm font-medium">Add File</span>
+            <input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
+        </div>
+
+        {/* Emoji Picker */}
+        {showEmojiPicker && (
+          <div className="mb-4 bg-gray-50 p-4 rounded-lg">
+            <p className="text-sm font-medium text-gray-700 mb-3">Select an emoji:</p>
+            <div className="grid grid-cols-10 gap-2">
+              {emojis.map((emoji, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => addEmoji(emoji)}
+                  className="text-2xl hover:scale-125 transition cursor-pointer"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Recipient Search */}
         <div className="mb-4">
@@ -112,6 +340,7 @@ export default function CreateShoutOut({ onSuccess }) {
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
               placeholder="Search for users to tag..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />

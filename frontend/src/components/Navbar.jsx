@@ -20,21 +20,40 @@ export default function Navbar({ user }) {
             <h1 className="text-2xl font-bold text-white">BragBoard</h1>
           </div>
 
-          {/* User Info & Logout */}
-          <div className="flex items-center space-x-4">
-            <div className="hidden sm:block text-right">
-              <p className="text-white font-semibold">{user?.name}</p>
-              <p className="text-indigo-100 text-sm">{user?.department}</p>
-            </div>
-            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white font-bold text-lg">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
-            </div>
+          {/* Navigation Links */}
+          <div className="flex items-center space-x-6">
+            {user?.role === "admin" && (
+              <button
+                onClick={() => navigate("/admin")}
+                className="text-white hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-lg transition font-semibold"
+              >
+                Admin Panel
+              </button>
+            )}
+
             <button
-              onClick={handleLogout}
-              className="ml-4 px-4 py-2 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition transform hover:scale-105"
+              onClick={() => navigate("/profile")}
+              className="text-white hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-lg transition font-semibold"
             >
-              Logout
+              Profile
             </button>
+            
+            {/* User Info & Logout */}
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:block text-right">
+                <p className="text-white font-semibold">{user?.name}</p>
+                <p className="text-indigo-100 text-sm">{user?.department}</p>
+              </div>
+              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+              <button
+                onClick={handleLogout}
+                className="ml-4 px-4 py-2 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition transform hover:scale-105"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </div>

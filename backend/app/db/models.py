@@ -31,6 +31,7 @@ class User(Base):
     reactions = relationship("Reaction", back_populates="user")
     reports = relationship("Report", back_populates="reporter")
     admin_logs = relationship("AdminLog", back_populates="admin")
+    notifications = relationship("Notification", back_populates="user")
 
 class ShoutOut(Base):
     __tablename__ = "shoutouts"
@@ -46,6 +47,7 @@ class ShoutOut(Base):
     comments = relationship("Comment", back_populates="shoutout", cascade="all, delete-orphan")
     reactions = relationship("Reaction", back_populates="shoutout", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="shoutout", cascade="all, delete-orphan")
+    attachments = relationship("Attachment", back_populates="shoutout", cascade="all, delete-orphan")
 
 class ShoutOutRecipient(Base):
     __tablename__ = "shoutout_recipients"
@@ -70,6 +72,8 @@ class Comment(Base):
     # Relationships
     shoutout = relationship("ShoutOut", back_populates="comments")
     user = relationship("User", back_populates="comments")
+    reactions = relationship("CommentReaction", back_populates="comment", cascade="all, delete-orphan")
+    reports = relationship("CommentReport", back_populates="comment", cascade="all, delete-orphan")
 
 class Reaction(Base):
     __tablename__ = "reactions"
@@ -101,10 +105,68 @@ class AdminLog(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     admin_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    action = Column(Text, nullable=False)
-    target_id = Column(Integer)
-    target_type = Column(String(50))
+    action = Column(String(255), nullable=False)
+    target_id = Column(Integer, nullable=False)
+    target_type = Column(String(100), nullable=False)
     timestamp = Column(TIMESTAMP, server_default=func.now())
     
     # Relationships
     admin = relationship("User", back_populates="admin_logs")
+
+
+class Attachment(Base):
+    __tablename__ = "attachments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    shoutout_id = Column(Integer, ForeignKey("shoutouts.id"), nullable=False)
+    file_name = Column(String(255), nullable=False)
+    file_type = Column(String(50), nullable=False)  # 'image', 'emoji', 'file', etc.
+    file_data = Column(Text, nullable=False)  # Base64 encoded file data
+    file_size = Column(Integer)  # Size in bytes
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    
+    # Relationships
+    shoutout = relationship("ShoutOut", back_populates="attachments")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    message = Column(Text, nullable=False)
+    type = Column(String(50), nullable=False)  # 'report_resolved', 'post_deleted', etc.
+    related_id = Column(Integer)  # ID of report, shoutout, etc.
+    is_read = Column(Integer, default=0)  # 0 = unread, 1 = read
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    
+    # Relationships
+    user = relationship("User", back_populates="notifications")
+
+
+class CommentReaction(Base):
+    __tablename__ = "comment_reactions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("comments.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    type = Column(String, nullable=False)  # 'heart', 'thumbs_up', 'clap'
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    
+    # Relationships
+    comment = relationship("Comment", back_populates="reactions")
+    user = relationship("User")
+
+
+class CommentReport(Base):
+    __tablename__ = "comment_reports"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("comments.id"), nullable=False)
+    reported_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    reason = Column(Text, nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    
+    # Relationships
+    comment = relationship("Comment", back_populates="reports")
+    reporter = relationship("User")

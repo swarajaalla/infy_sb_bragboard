@@ -1,7 +1,7 @@
 from fastapi import FastAPI # type: ignore
 from fastapi.middleware.cors import CORSMiddleware # type: ignore
 from app.db.database import engine, Base
-from app.api import auth, shoutouts
+from app.api import auth, shoutouts, admin
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -25,6 +25,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router)
 app.include_router(shoutouts.router)
+app.include_router(admin.router)
 
 @app.get("/")
 def root():

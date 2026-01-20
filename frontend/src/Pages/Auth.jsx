@@ -26,11 +26,11 @@ export default function Auth() {
     setLoading(true);
     try {
       if (isLogin) {
-        // OAuth2PasswordRequestForm expects form-encoded fields: username & password
-        const params = new URLSearchParams();
-        params.append("username", form.email);
-        params.append("password", form.password);
-        const res = await api.post("/auth/login", params);
+        // Send JSON login request
+        const res = await api.post("/auth/login", {
+          email: form.email,
+          password: form.password
+        });
         
         // Store token in localStorage (both keys for compatibility)
         localStorage.setItem("access_token", res.data.access_token);
