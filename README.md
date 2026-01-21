@@ -31,35 +31,33 @@ This project is developed as part of the **Infosys SpringBoard Virtual Internshi
 
 ## 📂 Project Structure
 
+```text
 infy_sb_bragboard/
-│
 ├── backend/
-│ ├── app/
-│ │ ├── core/
-│ │ ├── models/
-│ │ ├── routes/
-│ │ ├── schemas/
-│ │ ├── utils/
-│ │ ├── database.py
-│ │ └── main.py
-│ ├── make_admin.py
-│ └── package.json
+│   ├── app/
+│   │   ├── core/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── schemas/
+│   │   ├── utils/
+│   │   ├── database.py
+│   │   └── main.py
+│   ├── make_admin.py
+│   └── package.json
 │
 ├── frontend/
-│ ├── src/
-│ │ ├── components/
-│ │ ├── pages/
-│ │ ├── services/
-│ │ ├── App.jsx
-│ │ └── main.jsx
-│ ├── index.html
-│ └── package.json
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── index.html
+│   └── package.json
 │
 ├── .gitignore
 └── README.md
-
-
----
+```
 
 ## ⚙️ Features
 
@@ -92,7 +90,7 @@ uvicorn app.main:app --reload
 
 Backend will run at:
 http://127.0.0.1:8000
-
+Swagger UI:
 http://127.0.0.1:8000/docs
 
 Frontend Setup:
@@ -103,14 +101,17 @@ npm run dev
 Frontend will run at:
 http://localhost:5173
 
-
+```
 🔐 Default Roles
 
 User: Regular employee
+
 Admin: Can be created using make_admin.py
 
 📄 Reports
 
 CSV Export
+
 PDF Export
+
 Master Admin Report
