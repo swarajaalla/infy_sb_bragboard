@@ -19,7 +19,7 @@ This project is developed as part of the **Infosys SpringBoard Virtual Internshi
 - Python
 - FastAPI
 - SQLAlchemy
-- SQLite
+- PostgreSQL
 - JWT Authentication
 
 ### Tools
@@ -42,8 +42,9 @@ infy_sb_bragboard/
 │   │   ├── database.py
 │   │   └── main.py
 │   ├── make_admin.py
-│   └── package.json
-│
+│   └── package.json│
+│   
+
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -66,6 +67,7 @@ infy_sb_bragboard/
 - Like and comment on shoutouts
 - View department-wise shoutouts
 - User profile management
+- Upload profile images / attachments (if applicable)
 
 ### Admin Features
 - Admin dashboard with analytics
@@ -84,7 +86,7 @@ infy_sb_bragboard/
 cd backend
 python -m venv venv
 venv\Scripts\activate
-pip install -r requirements.txt
+pip install fastapi uvicorn sqlalchemy python-jose passlib[bcrypt]
 uvicorn app.main:app --reload
 
 Backend will run at:
