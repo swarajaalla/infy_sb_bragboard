@@ -59,7 +59,14 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.email == form_data.username).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.email == form_data.username,
+            User.is_active == True
+        )
+        .first()
+    )
 
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -88,7 +95,14 @@ def get_all_users(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return db.query(User).filter(User.id != current_user.id).all()
+    return (
+        db.query(User)
+        .filter(
+            User.id != current_user.id,
+            User.is_active == True
+        )
+        .all()
+    )
 
 # ------------------ USER STATS ------------------
 @router.get("/stats")

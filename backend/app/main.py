@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 
 from app.database import Base, engine
 
@@ -11,12 +13,15 @@ from app.routes.shoutout import router as shoutout_router
 from app.routes import reactions
 from app.routes import comments
 from app.routes import report
+from app.routes import upload
 
 
 # IMPORTANT: import models so tables are registered
 import app.models
 
 app = FastAPI(title="BragBoard API")
+
+app.mount("/uploads", StaticFiles(directory="app/uploads"), name="uploads")
 
 # ------------------ CORS CONFIG ------------------
 app.add_middleware(
@@ -35,6 +40,7 @@ app.include_router(comments.router)
 app.include_router(admin.router)
 app.include_router(report.router)
 app.include_router(export.router)
+app.include_router(upload.router)
 
 # ------------------ CREATE TABLES ------------------
 Base.metadata.create_all(bind=engine)

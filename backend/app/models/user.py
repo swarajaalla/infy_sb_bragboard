@@ -10,5 +10,4 @@ class User(Base):
     password = Column(String, nullable=False)
     role = Column(String, default="employee")
     department = Column(String, nullable=False)
-    #is_active = Column(Boolean, default=True)
-
+    is_active = Column(Boolean, default=True)  # ✅ ADD THIS

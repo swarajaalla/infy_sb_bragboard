@@ -380,7 +380,8 @@ def get_all_users_admin(
             "name": u.name,
             "email": u.email,
             "department": u.department,
-            "role": u.role
+            "role": u.role,
+            "is_active": u.is_active
         }
         for u in users
     ]
@@ -462,4 +463,19 @@ def disable_user(
 
     return {"message": "User disabled"}
 
+
+@router.patch("/users/{user_id}/enable")
+def enable_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(admin_only)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.is_active = True
+    db.commit()
+
+    return {"message": "User enabled"}
 

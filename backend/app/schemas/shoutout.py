@@ -18,12 +18,13 @@ class UserMini(BaseModel):
 class ShoutOutCreate(BaseModel):
     to_user_id: int
     message: str
-
+    attachment_url: Optional[str] = None  # <-- new optional field
 
 # ---------------- SIMPLE RESPONSE ----------------
 class ShoutOutResponse(BaseModel):
     id: int
     message: str
+    attachment_url: Optional[str] = None  # ✅ ADD THIS
     created_at: datetime
     from_user: UserMini
     reactions: list[ReactionResponse]

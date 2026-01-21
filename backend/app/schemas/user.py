@@ -6,15 +6,18 @@ class UserCreate(BaseModel):
     password: str
     department: str   # ✅ NEW
 
+# schemas/user.py
 class UserResponse(BaseModel):
     id: int
     name: str
     email: EmailStr
     role: str
-    department: str   # ✅ NEW
+    department: str
+    is_active: bool  # ✅ ADD THIS
 
     class Config:
         from_attributes = True
+
 
 class UserLogin(BaseModel):
     email: EmailStr

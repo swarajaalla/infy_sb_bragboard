@@ -273,3 +273,17 @@ export const getDepartmentRank = (token) =>
       Authorization: `Bearer ${token}`,
     },
   });
+
+// ---------------- ENABLE / DISABLE USER (ADMIN) ----------------
+
+// Disable user
+export const adminDisableUser = (token, userId) =>
+  api.patch(`/admin/users/${userId}/disable`, {}, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+// Enable user
+export const adminEnableUser = (token, userId) =>
+  api.patch(`/admin/users/${userId}/enable`, {}, {
+    headers: { Authorization: `Bearer ${token}` },
+  });

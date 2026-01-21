@@ -1,23 +1,23 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+# Replace YOUR_PASSWORD with the password you set for postgres
+DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/bragboard_db"
 
+# Create engine for PostgreSQL
+engine = create_engine(DATABASE_URL)
 
-DATABASE_URL = "sqlite:///./bragboard.db"
-
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}
-)
-
+# SessionLocal is used to interact with the database
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine
 )
 
+# Base class for your models
 Base = declarative_base()
 
+# Dependency to get DB session in FastAPI endpoints
 def get_db():
     db = SessionLocal()
     try:

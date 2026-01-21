@@ -418,6 +418,7 @@ import {
 } from "../services/api";
 import { getComments, addComment, deleteComment } from "../services/api";
 import { reportShoutout } from "../services/api";
+import EmojiPicker from "emoji-picker-react";
 
 
 function Dashboard() {
@@ -425,6 +426,8 @@ function Dashboard() {
   const [feed, setFeed] = useState([]);
   const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
   const [toUserId, setToUserId] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [openComments, setOpenComments] = useState(null);
@@ -443,6 +446,7 @@ function Dashboard() {
 
   const [toDepartment, setToDepartment] = useState("");
 
+  const [attachment, setAttachment] = useState(null);
 
 
   const navigate = useNavigate();
@@ -513,14 +517,35 @@ function Dashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    let attachment_url = null;
+
+    if (attachment) {
+      const formData = new FormData();
+      formData.append("file", attachment);
+
+      const res = await fetch("http://127.0.0.1:8000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      attachment_url = data.url;
+    }
+
     await createShoutout(token, {
       to_user_id: Number(toUserId),
       message,
+      attachment_url, // ✅ new optional field
     });
+
     setMessage("");
     setToUserId("");
+    setAttachment(null);
     loadData();
   };
+
+
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -636,13 +661,36 @@ function Dashboard() {
           onSubmit={handleSubmit}
           className="bg-white rounded-2xl shadow-lg p-8 space-y-6"
         >
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Write something nice..."
-            rows={4}
-            className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
+          <div className="relative">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Write something nice 😊"
+              rows={4}
+              className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+
+            {/* Emoji Button */}
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="absolute bottom-3 right-3 text-xl"
+            >
+              😀
+            </button>
+
+            {/* Emoji Picker */}
+            {showEmojiPicker && (
+              <div className="absolute z-50 top-full mt-2">
+                <EmojiPicker
+                  onEmojiClick={(emoji) =>
+                    setMessage((prev) => prev + emoji.emoji)
+                  }
+                />
+              </div>
+            )}
+          </div>
+
 
           <select
             value={toDepartment}
@@ -681,7 +729,13 @@ function Dashboard() {
             ))}
           </select>
 
-
+          <input
+            type="file"
+            accept="image/*,.pdf,.doc,.docx"
+            onChange={(e) => setAttachment(e.target.files[0])}
+            className="w-full rounded-xl border border-gray-200 px-4 py-2"
+          />
+          
           <button
             disabled={!toUserId || !message.trim()}
             className={`w-full rounded-xl py-3 font-semibold text-white transition ${
@@ -829,6 +883,28 @@ function Dashboard() {
             return (
               <div key={item.id} className="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-6 mb-6">
                 <p className="text-gray-800 mb-4">{item.message}</p>
+
+                {item.attachment_url && (
+                  <div className="mt-3">
+                    {item.attachment_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                      <img
+                        src={`http://127.0.0.1:8000/${item.attachment_url}`}
+                        alt="attachment"
+                        className="max-h-64 rounded-lg border"
+                      />
+                    ) : (
+                      <a
+                        href={`http://127.0.0.1:8000/${item.attachment_url}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-indigo-600 underline"
+                      >
+                        📎 View Attachment
+                      </a>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex justify-between text-xs text-gray-500 mb-4">
                   <span>
                     👤 {item.from_user.name} ({item.from_user.department})

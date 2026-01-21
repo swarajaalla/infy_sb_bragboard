@@ -31,3 +31,6 @@ build/
 # =====================
 .vscode/
 .DS_Store
+
+# Uploaded files
+backend/app/uploads/

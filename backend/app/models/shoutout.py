@@ -55,3 +55,5 @@ class ShoutOut(Base):
         cascade="all, delete",
         lazy="select"
     )
+# ✅ Add this column
+    attachment_url = Column(String, nullable=True)

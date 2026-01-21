@@ -1,6 +1,23 @@
 import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell
+} from "recharts";
 import { getDepartmentActivity } from "../services/api";
+
+const COLORS = [
+  "#6366F1", // Indigo
+  "#22C55E", // Green
+  "#F97316", // Orange
+  "#EC4899", // Pink
+  "#0EA5E9", // Sky Blue
+];
+
 
 export default function AdminAnalytics() {
   const [data, setData] = useState([]);
@@ -26,7 +43,14 @@ export default function AdminAnalytics() {
             <XAxis dataKey="department" />
             <YAxis allowDecimals={false} />
             <Tooltip />
-            <Bar dataKey="count" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+              {data.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -44,7 +44,8 @@ def create_shoutout(
     new_shoutout = ShoutOut(
         from_user_id=current_user.id,
         to_user_id=shoutout.to_user_id,
-        message=shoutout.message
+        message=shoutout.message,
+        attachment_url=shoutout.attachment_url  # ✅ save uploaded file URL
     )
 
     db.add(new_shoutout)
@@ -54,6 +55,7 @@ def create_shoutout(
     return {
         "id": new_shoutout.id,
         "message": new_shoutout.message,
+        "attachment_url": new_shoutout.attachment_url,  # ✅ include in response
         "created_at": new_shoutout.created_at,
         "from_user": {
             "id": current_user.id,
@@ -88,6 +90,7 @@ def get_my_shoutouts(
         response.append({
             "id": shoutout.id,
             "message": shoutout.message,
+            "attachment_url": shoutout.attachment_url,
             "created_at": shoutout.created_at,
             "from_user": {
                 "id": shoutout.from_user.id,
@@ -137,6 +140,7 @@ def get_feed(
         response.append({
             "id": shoutout.id,
             "message": shoutout.message,
+            "attachment_url": shoutout.attachment_url,
             "created_at": shoutout.created_at,
             "from_user": {
                 "id": shoutout.from_user.id,
@@ -174,6 +178,7 @@ def get_received_shoutouts(
         response.append({
             "id": shoutout.id,
             "message": shoutout.message,
+            "attachment_url": shoutout.attachment_url,
             "created_at": shoutout.created_at,
             "from_user": {
                 "id": shoutout.from_user.id,
