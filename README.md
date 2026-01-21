@@ -25,7 +25,6 @@ This project is developed as part of the **Infosys SpringBoard Virtual Internshi
 ### Tools
 - Git & GitHub
 - VS Code
-- Postman (API testing)
 
 ---
 
