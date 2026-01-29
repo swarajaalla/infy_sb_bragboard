@@ -98,7 +98,8 @@ cd "Backend - bragboard"
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn app:app --reload
+uvicorn app:app --reload (or) python -m uvicorn app:app --reload
+Live Server: https://bragboard-backend-2gpa.onrender.com/docs#/
 
 
 Backend will run at:
