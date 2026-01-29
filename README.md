@@ -82,7 +82,8 @@ bragboard_full_project/
 │
 └── README.md
 
-How to Run the Project (Local Setup)
+
+#How to Run the Project (Local Setup)
 Prerequisites
 
 Node.js (v18+ recommended)
@@ -93,7 +94,7 @@ Git
 
 PostgreSQL (optional for production)
 
-Backend Setup
+#Backend Setup
 cd "Backend - bragboard"
 python -m venv venv
 venv\Scripts\activate
@@ -106,7 +107,7 @@ Backend will run at:
 
 http://127.0.0.1:8000
 
-Frontend Setup
+#Frontend Setup
 cd bragboard-frontend
 npm install
 npm run dev
